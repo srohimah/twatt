@@ -1,24 +1,52 @@
-var express = require('express');
-var router = express.Router();
-var OAuth = require('oauth');
+const OAuth = require('oauth');
+require('dotenv').config()
+
+const oauth = new OAuth.OAuth(
+    'https://api.twitter.com/oauth/request_token',
+    'https://api.twitter.com/oauth/access_token',
+    process.env.cKey,
+    process.env.cSecret,
+    '1.0A',
+    null,
+    'HMAC-SHA1'
+  );
+
 
 module.exports = {
-    getTimeline (req, res){
-        var oauth = new OAuth.OAuth(
-            'https://api.twitter.com/oauth/request_token',
-            'https://api.twitter.com/oauth/access_token',
-            'D1WfaDOcNvHNGjzKOsqRQMNXo',
-            '9PzrcfuWA0wLM68dAMfT3j3248B3BUYTm8Y70oBqMsO6d8Skvu',
-            '1.0A',
-            null,
-            'HMAC-SHA1'
-          );
+    getTimeline (req, res,next){
+      console.log(process.env)
           oauth.get(
             'https://api.twitter.com/1.1/statuses/user_timeline.json',
-            '398848370-SzclQHCNDyPclK5CULzPVjRrUYcIsw3WW2n6NMmq', //test user token 
-            'WJ3EsiuQH8Ia5OknSduFGVrY0j0OlKqs5cCYQsTzmG9HD', //test user secret             
+             process.env.aToken,            
+             process.env.aTokenSecret,            
             function (e, data){
-                   res.status(200).send(data) 
+              if(e){
+                next(e)
+              }else{  
+                res.send(data) 
+              }
             });
-    }
+    },
+    
+    search (req, res){
+          oauth.get(
+            `https://api.twitter.com/1.1/search/tweets.json?q=${req.query.search}`,
+            process.env.aToken,            
+            process.env.aTokenSecret,                
+            function (e, data){
+                   res.send(data) 
+            });
+    },
+
+    postStatus (req, res){
+          oauth.post(
+            `https://api.twitter.com/1.1/statuses/update.json?status=${req.body.status}`,
+            process.env.aToken,            
+             process.env.aTokenSecret,   
+            req.body.status,   
+            'twitter',
+            function (e, data){
+                   res.send(data) 
+            });
+    },
 }
